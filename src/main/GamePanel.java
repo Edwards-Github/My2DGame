@@ -1,3 +1,8 @@
+package main;
+
+import entity.Player;
+import main.KeyHandler;
+
 import javax.swing.JPanel;
 
 import java.awt.Color;
@@ -11,7 +16,7 @@ public class GamePanel extends JPanel implements Runnable{
     final int originalTileSize = 16; // 16x16 tile
     final int scale = 3; // scale image to be larger or smaller
 
-    final int tileSize = originalTileSize * scale; // 48x48 tile
+    public final int tileSize = originalTileSize * scale; // 48x48 tile
     final int maxScreenCol = 16;
     final int maxScreenRow = 12;
     final int screenWidth = tileSize * maxScreenCol; // 768 pixels
@@ -23,6 +28,7 @@ public class GamePanel extends JPanel implements Runnable{
     KeyHandler keyH = new KeyHandler();
     // repeats a process again and again
     Thread gameThread; // drawing a screen 60 times / second
+    Player player = new Player(this, keyH);
 
     // Set player's default position
     int playerX = 100;
@@ -40,7 +46,7 @@ public class GamePanel extends JPanel implements Runnable{
 
     public void startGameThread() {
 
-        gameThread = new Thread(this); // this means GamePanel class
+        gameThread = new Thread(this); // this means main.GamePanel class
         gameThread.start();
     }
 
@@ -78,18 +84,7 @@ public class GamePanel extends JPanel implements Runnable{
     }
 
     public void update() {
-        if(keyH.upPressed == true) {
-            playerY -= playerSpeed;
-        }
-        else if(keyH.downPressed == true) {
-            playerY += playerSpeed;
-        }
-        else if(keyH.leftPressed == true) {
-            playerX -= playerSpeed;
-        }
-        else if(keyH.rightPressed == true) {
-            playerX += playerSpeed;
-        }
+        player.update();
     }
 
     public void paintComponent(Graphics g) {
@@ -98,9 +93,7 @@ public class GamePanel extends JPanel implements Runnable{
 
         Graphics2D g2 = (Graphics2D)g; // change Graphics g to Graphics2D class in short more functions
 
-        g2.setColor(Color.white);
-
-        g2.fillRect(playerX, playerY, tileSize, tileSize);
+        player.draw(g2);
 
         g2.dispose(); // Dispose of this graphics context and release any system resources that it is using
     }
