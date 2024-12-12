@@ -1,5 +1,6 @@
 package main;
 
+import entity.Entity;
 import entity.Player;
 import main.KeyHandler;
 import object.SuperObject;
@@ -33,7 +34,7 @@ public class GamePanel extends JPanel implements Runnable{
 
     // SYSTEM
     TileManager tileM = new TileManager(this);
-    KeyHandler keyH = new KeyHandler();
+    KeyHandler keyH = new KeyHandler(this);
     Sound music = new Sound();
     Sound se = new Sound();
     public CollisionChecker cChecker = new CollisionChecker(this);
@@ -45,6 +46,12 @@ public class GamePanel extends JPanel implements Runnable{
     // ENTITY AND OBJECT
     public Player player = new Player(this, keyH);
     public SuperObject obj[] = new SuperObject[10]; // can only display 10 objects at the same time
+    public Entity npc[] = new Entity[10];
+
+    // GAME STATE
+    public int gameState;
+    public final int playState = 1;
+    public final int pauseState = 2;
 
     public GamePanel() {
 
@@ -58,8 +65,10 @@ public class GamePanel extends JPanel implements Runnable{
     public void setupGame() {
 
         aSetter.setObject();
-
+        aSetter.setNPC();
         playMusic(0);
+        stopMusic();
+        gameState = playState;
     }
 
     public void startGameThread() {
@@ -102,7 +111,13 @@ public class GamePanel extends JPanel implements Runnable{
     }
 
     public void update() {
-        player.update();
+        if(gameState == playState){
+            player.update();
+        }
+
+        if(gameState == pauseState) {
+
+        }
     }
 
     public void paintComponent(Graphics g) {
@@ -124,6 +139,13 @@ public class GamePanel extends JPanel implements Runnable{
         for (int i = 0; i < obj.length; i++) {
             if(obj[i] != null) {
                 obj[i].draw(g2, this);
+            }
+        }
+
+        // NPC
+        for(int i = 0; i < npc.length; i++){
+            if(npc[i] != null) {
+                npc[i].draw(g2);
             }
         }
 
