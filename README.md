@@ -23,3 +23,7 @@ December 18, 2024
 17. Added an old man NPC
 18. Added collisions for NPC
 19. Added Dialogue for old man NPC
+
+December 19, 2024
+20. Added Custom Font
+21. Started Title Screen
