@@ -24,11 +24,11 @@ December 18, 2024
 18. Added collisions for NPC
 19. Added Dialogue for old man NPC
 
-December 19, 2024
-20. Added Custom Font
-21. Started Title Screen
+December 19, 2024 <br />
+20. Added Custom Font <br />
+21. Started Title Screen <br />
 
-December 23, 2024
-22. Finished Title Screen
-23. Added some functionality to Title Screen
-24. Added Player HP
+December 23, 2024 <br />
+22. Finished Title Screen <br />
+23. Added some functionality to Title Screen <br />
+24. Added Player HP <br />
