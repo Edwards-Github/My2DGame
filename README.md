@@ -27,3 +27,8 @@ December 18, 2024
 December 19, 2024
 20. Added Custom Font
 21. Started Title Screen
+
+December 23, 2024
+22. Finished Title Screen
+23. Added some functionality to Title Screen
+24. Added Player HP
