@@ -32,3 +32,6 @@ December 23, 2024 <br />
 22. Finished Title Screen <br />
 23. Added some functionality to Title Screen <br />
 24. Added Player HP <br />
+
+December 24, 2024 <br />
+25. Started adding events  <br />
