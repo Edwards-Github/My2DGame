@@ -12,6 +12,9 @@ import java.awt.Color;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Dimension;
+import java.beans.EventHandler;
+
+
 
 public class GamePanel extends JPanel implements Runnable{
 
@@ -40,6 +43,7 @@ public class GamePanel extends JPanel implements Runnable{
     public CollisionChecker cChecker = new CollisionChecker(this);
     public AssetSetter aSetter = new AssetSetter(this);
     public UI ui = new UI(this);
+    public main.EventHandler eHandler = new main.EventHandler(this);
     // repeats a process again and again
     Thread gameThread; // drawing a screen 60 times / second
 
