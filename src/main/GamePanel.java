@@ -7,196 +7,259 @@ import object.SuperObject;
 import tile.TileManager;
 
 import javax.swing.JPanel;
-
 import java.awt.Color;
+import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
-import java.awt.Dimension;
-import java.beans.EventHandler;
 
+public class GamePanel extends JPanel implements Runnable {
 
-
-public class GamePanel extends JPanel implements Runnable{
-
+    // ------------------------------------------------------------------------
     // SCREEN SETTINGS
-    final int originalTileSize = 16; // 16x16 tile
-    final int scale = 3; // scale image to be larger or smaller
+    // ------------------------------------------------------------------------
+    private static final int ORIGINAL_TILE_SIZE = 16; // 16x16 tile
+    private static final int SCALE = 3;               // scale image to be bigger or smaller
 
-    public final int tileSize = originalTileSize * scale; // 48x48 tile
+    /** The size of a tile in pixels, after scaling. */
+    public final int tileSize = ORIGINAL_TILE_SIZE * SCALE; // => 48x48
+
+    /** Number of columns and rows on the screen in tile units. */
     public final int maxScreenCol = 16;
     public final int maxScreenRow = 12;
-    public final int screenWidth = tileSize * maxScreenCol; // 768 pixels
-    public final int screenHeight = tileSize * maxScreenRow; // 576 pixels
 
+    /** Actual screen pixel dimensions. */
+    public final int screenWidth  = tileSize * maxScreenCol; // => 768 px
+    public final int screenHeight = tileSize * maxScreenRow; // => 576 px
+
+    // ------------------------------------------------------------------------
     // WORLD SETTINGS
+    // ------------------------------------------------------------------------
     public final int maxWorldCol = 50;
     public final int maxWorldRow = 50;
+    // Potential future expansions: multi-layer maps, dynamic loading, chunk-based systems
 
+    // ------------------------------------------------------------------------
     // FPS
-    int FPS = 60;
+    // ------------------------------------------------------------------------
+    private static final int FPS = 60;
 
-    // SYSTEM
-    TileManager tileM = new TileManager(this);
-    public KeyHandler keyH = new KeyHandler(this);
-    Sound music = new Sound();
-    Sound se = new Sound();
-    public CollisionChecker cChecker = new CollisionChecker(this);
-    public AssetSetter aSetter = new AssetSetter(this);
-    public UI ui = new UI(this);
-    public main.EventHandler eHandler = new main.EventHandler(this);
-    // repeats a process again and again
-    Thread gameThread; // drawing a screen 60 times / second
+    // ------------------------------------------------------------------------
+    // SYSTEM CLASSES
+    // ------------------------------------------------------------------------
+    private Thread gameThread;
+    public final KeyHandler keyH = new KeyHandler(this);
 
-    // ENTITY AND OBJECT
-    public Player player = new Player(this, keyH);
-    public SuperObject obj[] = new SuperObject[10]; // can only display 10 objects at the same time
-    public Entity npc[] = new Entity[10];
+    public final TileManager tileM = new TileManager(this);
+    public final Sound music = new Sound();
+    public final Sound se = new Sound(); // sound effects
+    public final CollisionChecker cChecker = new CollisionChecker(this);
+    public final AssetSetter aSetter = new AssetSetter(this);
+    public final UI ui = new UI(this);
+    public final main.EventHandler eHandler = new main.EventHandler(this);
 
-    // GAME STATE
+    // ------------------------------------------------------------------------
+    // ENTITIES & OBJECTS
+    // ------------------------------------------------------------------------
+    public final Player player = new Player(this, keyH);
+
+    /** Array for interactive objects (like chests, pickups, or obstacles). */
+    public SuperObject[] obj = new SuperObject[10];
+
+    /** Array for NPCs or other moving characters. */
+    public Entity[] npc = new Entity[10];
+
+    // ------------------------------------------------------------------------
+    // GAME STATES
+    // ------------------------------------------------------------------------
     public int gameState;
-    public final int titleState = 0;
-    public final int playState = 1;
-    public final int pauseState = 2;
-    public final int dialogueState = 3;
+    public static final int TITLE_STATE    = 0;
+    public static final int PLAY_STATE     = 1;
+    public static final int PAUSE_STATE    = 2;
+    public static final int DIALOGUE_STATE = 3;
 
+    // ------------------------------------------------------------------------
+    // CONSTRUCTOR
+    // ------------------------------------------------------------------------
     public GamePanel() {
-
         this.setPreferredSize(new Dimension(screenWidth, screenHeight));
-        this.setBackground(Color.black);
-        this.setDoubleBuffered(true); // enabling this can improve game's rendering performance
+        this.setBackground(Color.BLACK);
+        this.setDoubleBuffered(true);  // improves rendering performance
         this.addKeyListener(keyH);
-        this.setFocusable(true);
+        this.setFocusable(true);       // allows the panel to receive focus for key events
     }
 
+    // ------------------------------------------------------------------------
+    // INIT METHODS
+    // ------------------------------------------------------------------------
     public void setupGame() {
-
         aSetter.setObject();
         aSetter.setNPC();
-//        playMusic(0);
-        gameState = titleState;
+        // Optionally start background music here
+        // playMusic(0);
+        gameState = TITLE_STATE;
     }
 
     public void startGameThread() {
-
-        gameThread = new Thread(this); // this means main.GamePanel class
-        gameThread.start();
+        if (gameThread == null) {
+            gameThread = new Thread(this, "GameLoopThread");
+            gameThread.start();
+        }
     }
 
+    // ------------------------------------------------------------------------
+    // CORE GAME LOOP (Runnable)
+    // ------------------------------------------------------------------------
     @Override
     public void run() {
 
-        double drawInterval = 1000000000 / FPS; // 0.01666 seconds
+        // Using System.nanoTime for more precise timing
+        double drawInterval = 1_000_000_000.0 / FPS; // ~0.01666 secs
         double nextDrawTime = System.nanoTime() + drawInterval;
 
-        while(gameThread != null) {
+        while (gameThread != null) {
 
-            // 1 UPDATE: update information such as character positions
+            // 1. UPDATE: game logic
             update();
 
-            // 2 DRAW: draw the screen with the updated information
+            // 2. DRAW: render the updated scene
             repaint();
 
-            // Create cooldown period before updating and repainting
+            // 3. FRAME CONTROL (sleep)
             try {
                 double remainingTime = nextDrawTime - System.nanoTime();
-                remainingTime = remainingTime / 1000000;
+                remainingTime /= 1_000_000.0; // convert ns to ms
 
-                if(remainingTime < 0) {
+                if (remainingTime < 0) {
+                    // If we're behind schedule, skip sleeping
                     remainingTime = 0;
                 }
-
-                Thread.sleep((long) remainingTime); // pauses game loop until remainingTime is over
-
+                Thread.sleep((long) remainingTime);
                 nextDrawTime += drawInterval;
 
             } catch (InterruptedException e) {
                 e.printStackTrace();
+                Thread.currentThread().interrupt();
+                break;
             }
         }
     }
 
+    // ------------------------------------------------------------------------
+    // UPDATE LOGIC
+    // ------------------------------------------------------------------------
     public void update() {
-        if(gameState == playState){
-            // PLAYER
-            player.update();
-            // NPC
-            for(int i = 0; i < npc.length; i++){
-                if(npc[i] != null) {
-                    npc[i].update();
+        switch (gameState) {
+            case PLAY_STATE:
+                // Update the player
+                player.update();
+
+                // Update NPCs
+                for (Entity npcEntity : npc) {
+                    if (npcEntity != null) {
+                        npcEntity.update();
+                    }
                 }
-            }
-        }
+                break;
 
-        if(gameState == pauseState) {
+            case PAUSE_STATE:
+                // You could do logic for paused UI
+                break;
 
+            case TITLE_STATE:
+            case DIALOGUE_STATE:
+            default:
+                // For dialogue, you might handle input to proceed text
+                // For title, you might handle menu input
+                break;
         }
     }
 
-    public void paintComponent(Graphics g) {
-        // Graphics class has many functions to draw objects on the screen
-        super.paintComponent(g); // super in this case is JPanel
+    // ------------------------------------------------------------------------
+    // RENDER LOGIC
+    // ------------------------------------------------------------------------
+    @Override
+    protected void paintComponent(Graphics g) {
+        super.paintComponent(g);
 
-        Graphics2D g2 = (Graphics2D)g; // change Graphics g to Graphics2D class in short more functions
+        Graphics2D g2 = (Graphics2D) g;
 
-        // DEBUG
+        // DEBUG - measure drawing time if toggled
         long drawStart = 0;
-        if(keyH.checkDrawTime == true){
+        if (keyH.checkDrawTime) {
             drawStart = System.nanoTime();
         }
 
-        // TITLE SCREEN
-        if(gameState == titleState) {
+        // 1. Title Screen
+        if (gameState == TITLE_STATE) {
             ui.draw(g2);
         }
-        // OTHERS
+        // 2. Game Scenes
         else {
-            // TILE
-            tileM.draw(g2); // tiles must be drawn before player to avoid the player being hidden behind the tiles.
+            // Draw Tiles
+            tileM.draw(g2);
 
-            // OBJECT
-            for (int i = 0; i < obj.length; i++) {
-                if(obj[i] != null) {
-                    obj[i].draw(g2, this);
+            // Draw Objects
+            for (SuperObject superObj : obj) {
+                if (superObj != null) {
+                    superObj.draw(g2, this);
                 }
             }
 
-            // NPC
-            for(int i = 0; i < npc.length; i++){
-                if(npc[i] != null) {
-                    npc[i].draw(g2);
+            // Draw NPCs
+            for (Entity npcEntity : npc) {
+                if (npcEntity != null) {
+                    npcEntity.draw(g2);
                 }
             }
 
-            // PLAYER
+            // Draw Player
             player.draw(g2);
 
-            // UI
+            // Draw UI
             ui.draw(g2);
         }
 
-        // DEBUG
-        if(keyH.checkDrawTime == true){
+        // DEBUG: measure draw time
+        if (keyH.checkDrawTime) {
             long drawEnd = System.nanoTime();
             long passed = drawEnd - drawStart;
-            g2.setColor(Color.white);
-            g2.drawString("Draw Time: " + passed, 10, 400);
-            System.out.println("Draw Time: " + passed);
+            g2.setColor(Color.WHITE);
+            g2.drawString("Draw Time: " + passed + " ns", 10, 400);
+            System.out.println("Draw Time: " + passed + " ns");
         }
-        g2.dispose(); // Dispose of this graphics context and release any system resources that it is using
+
+        g2.dispose();
     }
 
+    // ------------------------------------------------------------------------
+    // AUDIO CONTROLS
+    // ------------------------------------------------------------------------
     public void playMusic(int i) {
         music.setFile(i);
         music.play();
         music.loop();
     }
 
-    public void stopMusic(){
+    public void stopMusic() {
         music.stop();
     }
 
-    public void playSE(int i){
+    public void playSE(int i) {
         se.setFile(i);
         se.play();
+    }
+
+    // ------------------------------------------------------------------------
+    // Potential Additional Methods
+    // ------------------------------------------------------------------------
+    /**
+     * Gracefully stops the game thread, e.g., on window close or re-initialization.
+     */
+    public void stopGameThread() {
+        if (gameThread != null) {
+            Thread tmp = gameThread;
+            gameThread = null;
+            tmp.interrupt(); // optional to break out of run() faster
+        }
     }
 }
