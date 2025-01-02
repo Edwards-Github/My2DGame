@@ -13,7 +13,8 @@ To run this game on your local machine, you will need:
 
 3. Clone the Repository: Use the following command to clone this repository to your local machine:
 
-  `git clone https://github.com/Edwards-Github/My2DGame.git`
+    git clone https://github.com/Edwards-Github/My2DGame.git
+
 
 4. Open the Project: Open the project in your chosen IDE.
 
